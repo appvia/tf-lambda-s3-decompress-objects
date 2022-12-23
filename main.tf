@@ -1,5 +1,7 @@
 provider "archive" {}
 
+data "aws_caller_identity" "current" {}
+
 data "archive_file" "decompressor_object" {
   type        = "zip"
   source_file = "${path.module}/config/s3-decompressor.py"
@@ -10,12 +12,16 @@ module "lambda" {
   source  = "cloudposse/lambda-function/aws"
   version = "0.4.1"
 
-  custom_iam_policy_arns = [aws_iam_policy.s3-access.arn]
+  custom_iam_policy_arns = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/lambda-s3-decompressor-access-${var.bucket_name}"]
   filename               = data.archive_file.decompressor_object.output_path
   function_name          = "decompress-object"
   handler                = "s3-decompressor.lambda_handler"
   runtime                = "python3.7"
   timeout                = 30
+
+  depends_on = [
+    aws_iam_policy.s3-access
+  ]
 }
 
 resource "aws_iam_policy" "s3-access" {
