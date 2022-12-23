@@ -54,7 +54,9 @@ The Lambda function will:
 
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name) | The name of the S3 bucket to grant access to | `string` | n/a | yes |
 
 ## Outputs
 
