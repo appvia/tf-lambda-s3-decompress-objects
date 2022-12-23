@@ -5,10 +5,15 @@ from pathlib import Path
 import sys
 import tarfile
 
-def lambda_handler(event, context):
-    configure_logger()
-    logger = get_logger()
+logger = logging.getLogger('s3-decompressor')
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
+def lambda_handler(event, context):
     s3_bucket = event['Records'][0]['s3']['bucket']['name']
     s3_key = event['Records'][0]['s3']['object']['key']
 
@@ -21,50 +26,48 @@ def lambda_handler(event, context):
     file_input_path = Path(s3_key).parent.as_posix()
     file_output_path = file_input_path.replace("input", "output") + '/'
 
-    download_file(s3_bucket, s3_key, zipfile)
-    extract_files(zipfile, zipfile_output_dir)
-    upload_files(zipfile_output_dir + zipfile_name, s3_bucket, file_output_path)
+    try:
+        download_file(s3_bucket, s3_key, zipfile)
+        extract_files(zipfile, zipfile_output_dir)
+        upload_files(zipfile_output_dir + zipfile_name, s3_bucket, file_output_path)
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
 
     logger.info("Process completed successfully.")
-    sys.exit(0)
+    return {
+        'statusCode': 200,
+        'body': f"S3 file decompression successful, output location: s3://{s3_bucket}/{file_output_path}"
+    }
 
-def configure_logger():
-    logger = logging.getLogger('s3-decompressor')
-    logger.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-def get_logger():
-    return logging.getLogger('s3-decompressor')
+def exception_handler(code, msg):
+    return {
+        'statusCode': code,
+        'body': msg
+    }
 
 def download_file(s3_bucket, s3_key, output):
-    logger = get_logger()
     try:
         s3 = boto3.resource('s3')
         s3.meta.client.download_file(s3_bucket, s3_key, output)
     except Exception as e:
-        logger.error(f"There was a problem downloading the file '{s3_key}' from S3 bucket '{s3_bucket}. Exception Message: {e}")
-        sys.exit(1)
+        raise Exception(f"There was a problem downloading the file '{s3_key}' from S3 bucket '{s3_bucket}. Exception Message: {e}")
 
     logger.info(f"S3 file '{s3_key}' has been downloaded to '{output}'.")
 
 def extract_files(zipfile, output_dir):
-    logger = get_logger()
     try:
         tar = tarfile.open(zipfile, "r:gz")
         tar.extractall(path=output_dir)
     except Exception as e:
-        logger.error(f"File '{zipfile}' may be corrupt, cannot extract contents from tarfile. Exception Message: {e}")
-        sys.exit(1)
+        raise Exception(f"File '{zipfile}' may be corrupt, cannot extract contents from tarfile. Exception Message: {e}")
 
     logger.info(f"Files have been extracted to '{output_dir}' directory.")
     tar.close()
 
 def upload_files(zipfile_output_dir, s3_bucket, path):
-    logger = get_logger()
     file_list = glob.glob(f'{zipfile_output_dir}/*.log')
 
     s3 = boto3.resource('s3')
@@ -79,8 +82,6 @@ def upload_files(zipfile_output_dir, s3_bucket, path):
         else:
             full_s3_filepath = "s3://" + s3_bucket + "/" + path + file_name
             logger.info(f"File uploaded: '{full_s3_filepath}'")
-
     
     if failed_uploads > 0:
-        logger.error(f"S3 upload failed for {failed_uploads} file(s).")
-        sys.exit(1)
+        raise Exception(f"S3 upload failed for {failed_uploads} file(s).")
