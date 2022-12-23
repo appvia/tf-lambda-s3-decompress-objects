@@ -1,0 +1,20 @@
+content: |-
+  # tf-lambda-s3-decompress-objects
+
+  This module deploys a Lambda function which can be called via S3 Notifications, extracts zip files and uploads their contents back into S3.
+  
+  When a file is uploaded to an S3 bucket, the Lambda function would receive an event similar to below:
+
+  ```json
+  {{ include "examples/event.json" }}
+  ```
+
+  The Lambda function will:
+  1. Download the `.tar.gz` file
+  2. Extract the contents
+  3. Loop through each `.log` file
+  4. Uploads the file(s) to S3 in an `output` directory
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
