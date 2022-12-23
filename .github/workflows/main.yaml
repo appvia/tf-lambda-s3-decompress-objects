@@ -122,9 +122,9 @@ jobs:
         id: security
         uses: appvia/terranetes-policy-action@v1
         with:
+          configuration: "terranetes-policies/.checkov.yaml"
           directory: "."
           policy_ssh_key: "${{ secrets.policy_token }}"
-          policy_url: "${{ env.POLICY_SOURCE }}"
           policy_version: "${{ env.POLICY_VERSION }}"
 
   cost-token:
