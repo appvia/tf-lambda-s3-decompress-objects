@@ -26,7 +26,6 @@ def lambda_handler(event, context):
     upload_files(zipfile_output_dir + zipfile_name, s3_bucket, file_output_path)
 
     logger.info("Process completed successfully.")
-    sys.exit(0)
 
 def configure_logger():
     logger = logging.getLogger('s3-decompressor')
