@@ -42,12 +42,6 @@ def lambda_handler(event, context):
         'body': f"S3 file decompression successful, output location: s3://{s3_bucket}/{file_output_path}"
     }
 
-def exception_handler(code, msg):
-    return {
-        'statusCode': code,
-        'body': msg
-    }
-
 def download_file(s3_bucket, s3_key, output):
     try:
         s3 = boto3.resource('s3')
