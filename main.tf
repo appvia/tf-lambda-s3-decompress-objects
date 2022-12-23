@@ -1,3 +1,5 @@
+provider "archive" {}
+
 data "archive_file" "decompressor_object" {
   type        = "zip"
   source_file = "${path.module}/config/s3-decompressor.py"

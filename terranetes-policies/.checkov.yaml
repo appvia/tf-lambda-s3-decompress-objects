@@ -1,0 +1,13 @@
+---
+framework: terraform
+skip-check:
+  - CKV2_AWS_6
+  - CKV2_AWS_40
+  - CKV_AWS_18
+  - CKV_AWS_118
+  - CKV_AWS_129
+  - CKV_AWS_144
+  - CKV_AWS_157
+  - CKV_AWS_161
+  - CKV_AWS_173
+  - CKV_AWS_272
