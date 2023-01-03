@@ -29,7 +29,7 @@ def lambda_handler(event, context):
     try:
         download_file(s3_bucket, s3_key, zipfile)
         extract_files(zipfile, zipfile_output_dir)
-        upload_files(zipfile_output_dir + zipfile_name, s3_bucket, file_output_path)
+        upload_files(zipfile_output_dir, s3_bucket, file_output_path)
     except Exception as e:
         return {
             'statusCode': 500,
@@ -62,7 +62,8 @@ def extract_files(zipfile, output_dir):
     tar.close()
 
 def upload_files(zipfile_output_dir, s3_bucket, path):
-    file_list = glob.glob(f'{zipfile_output_dir}/*.log')
+    file_list = glob.glob(f'{zipfile_output_dir}/**/*.log', recursive=True)
+    logger.info(f"Detected files for upload: {file_list}")
 
     s3 = boto3.resource('s3')
     failed_uploads = 0
