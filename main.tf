@@ -17,7 +17,7 @@ module "lambda" {
   function_name          = "decompress-object"
   handler                = "s3-decompressor.lambda_handler"
   runtime                = "python3.7"
-  timeout                = 30
+  timeout                = var.timeout
 
   depends_on = [
     aws_iam_policy.s3-access
